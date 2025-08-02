@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluador Automático de Proyectos Sociales</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F5F9FF 0%, #E8F2FF 100%);
+            min-height: 100vh;
+            color: #003366;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #003366 0%, #336699 100%);
+            color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 51, 102, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 51, 102, 0.1);
+            border-left: 5px solid #336699;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #003366;
+            font-size: 1.1rem;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #E8F2FF;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background-color: #F5F9FF;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #336699;
+            background-color: white;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px dashed #336699;
+            border-radius: 10px;
+            background-color: #F5F9FF;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input:hover {
+            background-color: #E8F2FF;
+            border-color: #003366;
+        }
+
+        .file-input input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #E8F2FF;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #003366;
+        }
+
+        .analyzing {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 51, 102, 0.1);
+        }
+
+        .spinner {
+            border: 4px solid #E8F2FF;
+            border-top: 4px solid #336699;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+            background: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 51, 102, 0.1);
+            border-left: 5px solid #336699;
+        }
+
+        .criterion-result {
+            border-bottom: 1px solid #E8F2FF;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .criterion-result:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .criterion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .criterion-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #003366;
+        }
+
+        .criterion-score {
+            background: linear-gradient(135deg, #336699 0%, #6699CC 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .criterion-feedback {
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #F5F9FF;
+            border-radius: 8px;
+            border-left: 4px solid #336699;
+        }
+
+        .recommendation {
+            margin-top: 10px;
+            padding: 12px;
+            background-color: #FFF5E6;
+            border-radius: 8px;
+            border-left: 4px solid #FF9800;
+            font-size: 0.95rem;
+        }
+
+        .recommendation strong {
+            color: #E65100;
+        }
+
+        .total-score-section {
+            background: linear-gradient(135deg, #336699 0%, #6699CC 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(51, 102, 153, 0.3);
+        }
+
+        .total-score {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-interpretation {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .privacy-notice {
+            background: linear-gradient(135deg, #F5F9FF 0%, #E8F2FF 100%);
+            border: 2px solid #336699;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .privacy-notice h3 {
+            color: #003366;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .privacy-notice a {
+            color: #336699;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .privacy-notice a:hover {
+            text-decoration: underline;
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #003366 0%, #336699 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 51, 102, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 51, 102, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6699CC 0%, #99CCFF 100%);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        .hidden-form {
+            display: none;
+        }
+
+        .details-section {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9ff;
+            border-radius: 8px;
+            border-left: 3px solid #4CAF50;
+        }
+
+        .strength-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .form-section {
+                padding: 20px;
+            }
+            
+            .criterion-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .buttons-container {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+
+            .total-score {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Evaluador Automático de Proyectos</h1>
+            <p>Sube tu proyecto y obtén una evaluación instantánea con recomendaciones de mejora</p>
+        </div>
+
+        <div class="form-section">
+            <div class="form-group">
+                <label for="nombreCompleto">Nombre Completo:</label>
+                <input type="text" id="nombreCompleto" name="nombreCompleto" placeholder="Ingrese su nombre completo" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="proyectoPDF">Archivo del Proyecto (PDF):</label>
+                <div class="file-upload">
+                    <div class="file-input" onclick="document.getElementById('proyectoPDF').click()">
+                        <input type="file" id="proyectoPDF" accept=".pdf" required>
+                        <div>
+                            <strong>📄 Arrastra tu archivo PDF aquí o haz clic para seleccionar</strong>
+                            <br><small>Tamaño máximo: 10MB</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="file-info" id="fileInfo" style="display: none;"></div>
+            </div>
+
+            <div class="buttons-container">
+                <button class="btn" id="analyzeBtn" onclick="analizarProyecto()" disabled>
+                    🔍 Analizar Proyecto
+                </button>
+            </div>
+        </div>
+
+        <div class="analyzing" id="analyzing">
+            <div class="spinner"></div>
+            <h3>Analizando tu proyecto...</h3>
+            <p>Por favor espera mientras evaluamos automáticamente todos los criterios</p>
+        </div>
+
+        <div class="results-section" id="results">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #003366;">📊 Resultados de la Evaluación</h2>
+            <div id="criteriaResults"></div>
+        </div>
+
+        <div class="total-score-section" id="totalScoreSection" style="display: none;">
+            <div class="total-score" id="totalScore">0.0</div>
+            <div class="score-interpretation" id="scoreInterpretation"></div>
+        </div>
+
+        <div class="privacy-notice">
+            <h3>🔒 Aviso de Privacidad</h3>
+            <p><strong>Aviso de privacidad:</strong> Los datos personales solicitados en este formulario (nombre y archivo PDF) se recaban únicamente para fines de evaluación interna, estadística y mejora continua. No se compartirán con terceros. La información enviada será tratada con confidencialidad. Puedes solicitar la eliminación de tus datos escribiendo a <a href="mailto:juanalbino06@gmail.com">juanalbino06@gmail.com</a></p>
+        </div>
+
+        <div class="buttons-container" id="finalButtons" style="display: none;">
+            <button class="btn" onclick="enviarResultados()">📧 Enviar Resultados</button>
+            <button class="btn btn-secondary" onclick="copiarResumen()">📋 Copiar Resumen</button>
+            <button class="btn btn-secondary" onclick="reiniciar()">🔄 Nueva Evaluación</button>
+        </div>
+
+        <!-- Formulario oculto para envío -->
+        <form class="hidden-form" id="hiddenForm" action="https://formsubmit.co/juanalbino06@gmail.com" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="nombre" id="hiddenNombre">
+            <input type="hidden" name="puntaje_total" id="hiddenPuntaje">
+            <input type="hidden" name="resultados_detallados" id="hiddenResultados">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_subject" value="Nueva Evaluación de Proyecto">
+        </form>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Configurar PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfText = '';
+        let evaluationResults = {};
+
+        // Criterios de evaluación mejorados con análisis más profundo
+        const criterios = {
+            pertinencia: {
+                nombre: "Pertinencia del Proyecto",
+                palabrasClave: {
+                    poblacion: ['población', 'beneficiarios', 'comunidad', 'target', 'usuarios', 'grupo objetivo', 'destinatarios'],
+                    necesidades: ['necesidad', 'problema', 'carencia', 'déficit', 'brecha', 'falta', 'demanda'],
+                    contexto: ['contexto', 'situación', 'entorno', 'ambiente', 'territorio', 'zona', 'área'],
+                    relevancia: ['relevante', 'importante', 'prioritario', 'urgente', 'significativo', 'trascendente'],
+                    vulnerabilidad: ['vulnerable', 'marginado', 'exclusión', 'pobreza', 'riesgo', 'desprotegido']
+                },
+                peso: 1.3,
+                umbralMinimo: 2.0
+            },
+            justificacion: {
+                nombre: "Justificación y Fundamentación",
+                palabrasClave: {
+                    datos: ['estadística', 'datos', 'cifras', 'porcentaje', 'índice', 'tasa', 'ratio'],
+                    evidencia: ['evidencia', 'prueba', 'demostración', 'comprobación', 'verificación'],
+                    investigacion: ['estudio', 'investigación', 'análisis', 'diagnóstico', 'encuesta', 'censo'],
+                    referencias: ['referencias', 'bibliografía', 'fuentes', 'citas', 'autores', 'publicaciones'],
+                    marco: ['marco teórico', 'fundamento', 'base conceptual', 'sustento', 'respaldo']
+                },
+                peso: 1.4,
+                umbralMinimo: 2.5
+            },
+            coherencia: {
+                nombre: "Coherencia y Estructura",
+                palabrasClave: {
+                    objetivos: ['objetivo', 'meta', 'propósito', 'finalidad', 'fin', 'misión'],
+                    metodologia: ['metodología', 'método', 'enfoque', 'estrategia', 'técnica', 'procedimiento'],
+                    actividades: ['actividad', 'acción', 'tarea', 'proceso', 'intervención', 'operación'],
+                    resultados: ['resultado', 'producto', 'entregable', 'output', 'logro', 'alcance'],
+                    indicadores: ['indicador', 'medición', 'métrica', 'parámetro', 'variable', 'criterio']
+                },
+                peso: 1.2,
+                umbralMinimo: 2.0
+            },
+            redaccion: {
+                nombre: "Calidad de Redacción",
+                palabrasClave: {},
+                peso: 1.0,
+                umbralMinimo: 2.0
+            },
+            viabilidad: {
+                nombre: "Viabilidad Operativa",
+                palabrasClave: {
+                    tiempo: ['cronograma', 'tiempo', 'plazo', 'duración', 'calendario', 'fecha'],
+                    recursos: ['recursos', 'presupuesto', 'costo', 'financiamiento', 'fondos', 'inversión'],
+                    capacidades: ['capacidad', 'competencia', 'habilidad', 'experiencia', 'conocimiento'],
+                    equipo: ['personal', 'equipo', 'staff', 'profesionales', 'especialistas'],
+                    infraestructura: ['infraestructura', 'equipamiento', 'instalaciones', 'materiales']
+                },
+                peso: 1.3,
+                umbralMinimo: 2.5
+            },
+            sostenibilidad: {
+                nombre: "Sostenibilidad del Proyecto",
+                palabrasClave: {
+                    continuidad: ['sostenible', 'permanente', 'continuidad', 'durabilidad', 'persistencia'],
+                    impacto: ['impacto', 'efecto', 'consecuencia', 'resultado', 'transformación'],
+                    seguimiento: ['seguimiento', 'monitoreo', 'evaluación', 'control', 'supervisión'],
+                    escalabilidad: ['replicable', 'escalable', 'transferible', 'multiplicador', 'expansión'],
+                    autonomia: ['autosuficiente', 'independiente', 'autónomo', 'autogestión']
+                },
+                peso: 1.2,
+                umbralMinimo: 2.0
+            },
+            innovacion: {
+                nombre: "Innovación y Creatividad",
+                palabrasClave: {
+                    novedad: ['innovador', 'novedoso', 'original', 'único', 'diferente', 'creativo'],
+                    tecnologia: ['tecnología', 'digital', 'virtual', 'online', 'app', 'plataforma'],
+                    mejora: ['mejora', 'optimización', 'perfeccionamiento', 'actualización'],
+                    disrupcion: ['disruptivo', 'revolucionario', 'transformador', 'cambio de paradigma'],
+                    eficiencia: ['eficiencia', 'efectividad', 'productividad', 'rendimiento']
+                },
+                peso: 1.1,
+                umbralMinimo: 1.5
+            }
+        };
+
+        // Event listeners
+        document.getElementById('proyectoPDF').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    mostrarNotificacion('Por favor selecciona un archivo PDF válido', 'error');
+                    this.value = ''; // Limpiar la selección
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    mostrarNotificacion('El archivo es demasiado grande. Máximo 10MB', 'error');
+                    this.value = ''; // Limpiar la selección
+                    return;
+                }
+                
+                document.getElementById('fileInfo').style.display = 'block';
+                document.getElementById('fileInfo').innerHTML = `
+                    <strong>📄 Archivo seleccionado:</strong> ${file.name}<br>
+                    <strong>📏 Tamaño:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+                    <strong>✅ Estado:</strong> Listo para analizar
+                `;
+                
+                // Verificar si se puede habilitar el botón
+                const hasName = document.getElementById('nombreCompleto').value.trim().length > 0;
+                document.getElementById('analyzeBtn').disabled = !hasName;
+            }
+        });
+
+        // Agregar soporte para drag & drop
+        const fileInput = document.querySelector('.file-input');
+        
+        fileInput.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#E8F2FF';
+            this.style.borderColor = '#003366';
+        });
+        
+        fileInput.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#F5F9FF';
+            this.style.borderColor = '#336699';
+        });
+        
+        fileInput.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#F5F9FF';
+            this.style.borderColor = '#336699';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('proyectoPDF').files = files;
+                // Disparar evento change manualmente
+                const event = new Event('change', { bubbles: true });
+                document.getElementById('proyectoPDF').dispatchEvent(event);
+            }
+        });
+
+        async function analizarProyecto() {
+            const nombre = document.getElementById('nombreCompleto').value.trim();
+            const fileInput = document.getElementById('proyectoPDF');
+            
+            if (!nombre) {
+                mostrarNotificacion('Por favor ingresa tu nombre completo', 'error');
+                return;
+            }
+            
+            if (!fileInput.files[0]) {
+                mostrarNotificacion('Por favor selecciona un archivo PDF', 'error');
+                return;
+            }
+
+            // Mostrar análisis en progreso
+            document.getElementById('analyzing').style.display = 'block';
+            document.getElementById('analyzeBtn').textContent = '⏳ Analizando...';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                // Extraer texto del PDF
+                await extraerTextoPDF(fileInput.files[0]);
+                
+                // Realizar evaluación automática
+                realizarEvaluacion();
+                
+                // Mostrar resultados
+                mostrarResultados();
+                
+                mostrarNotificacion('¡Análisis completado exitosamente!', 'success');
+                
+            } catch (error) {
+                console.error('Error al analizar:', error);
+                mostrarNotificacion('Error al analizar el archivo. Por favor intenta de nuevo.', 'error');
+            } finally {
+                document.getElementById('analyzing').style.display = 'none';
+                document.getElementById('analyzeBtn').textContent = '🔍 Analizar Proyecto';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        async function extraerTextoPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let fullText = '';
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + ' ';
+            }
+            
+            pdfText = fullText.toLowerCase();
+        }
+
+        function realizarEvaluacion() {
+            evaluationResults = {};
+            
+            Object.keys(criterios).forEach(criterio => {
+                if (criterio === 'redaccion') {
+                    evaluationResults[criterio] = evaluarRedaccion();
+                } else {
+                    evaluationResults[criterio] = evaluarCriterio(criterio);
+                }
+            });
+        }
+
+        function evaluarCriterio(criterio) {
+            const config = criterios[criterio];
+            let puntuacion = 1.0;
+            let encontradas = {};
+            let totalPalabras = 0;
+            
+            // Análisis más profundo por categorías
+            Object.keys(config.palabrasClave).forEach(categoria => {
+                const palabras = config.palabrasClave[categoria];
+                encontradas[categoria] = [];
+                
+                palabras.forEach(palabra => {
+                    const regex = new RegExp(`\\b${palabra}\\b`, 'gi');
+                    const matches = pdfText.match(regex);
+                    if (matches) {
+                        encontradas[categoria].push({ palabra, count: matches.length });
+                        totalPalabras += matches.length;
+                        
+                        // Puntuación diferenciada por categoría
+                        puntuacion += matches.length * 0.15;
+                    }
+                });
+            });
+            
+            // Bonus por diversidad de categorías cubiertas
+            const categoriasCubiertas = Object.keys(encontradas).filter(cat => encontradas[cat].length > 0);
+            const diversidadBonus = (categoriasCubiertas.length / Object.keys(config.palabrasClave).length) * 0.8;
+            puntuacion += diversidadBonus;
+            
+            // Análisis de densidad y distribución
+            const longitudTexto = pdfText.length;
+            const densidadPalabras = totalPalabras / (longitudTexto / 1000); // palabras por cada 1000 caracteres
+            
+            if (densidadPalabras > 2) {
+                puntuacion += 0.5; // Bonus por alta densidad temática
+            } else if (densidadPalabras < 0.5) {
+                puntuacion -= 0.3; // Penalización por baja densidad
+            }
+            
+            // Evaluación de desarrollo del tema
+            const desarrolloBonus = Math.min(longitudTexto / 3000, 1.2); // Bonus por desarrollo extenso
+            puntuacion += desarrolloBonus * 0.4;
+            
+            // Aplicar peso específico del criterio
+            puntuacion *= config.peso;
+            
+            // Aplicar umbral mínimo
+            puntuacion = Math.max(puntuacion, config.umbralMinimo);
+            
+            // Normalizar a escala 1-5
+            puntuacion = Math.min(puntuacion, 5);
+            
+            return {
+                puntuacion: puntuacion,
+                palabrasEncontradas: encontradas,
+                densidadTematica: densidadPalabras,
+                categoriasCubiertas: categoriasCubiertas.length,
+                totalCategorias: Object.keys(config.palabrasClave).length,
+                feedback: generarFeedback(criterio, puntuacion, encontradas, categoriasCubiertas),
+                recomendaciones: generarRecomendaciones(criterio, puntuacion, categoriasCubiertas)
+            };
+        }
+
+        function evaluarRedaccion() {
+            let puntuacion = 2.5; // Base más realista
+            
+            // Análisis de estructura de oraciones
+            const oraciones = pdfText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+            const longitudPromedio = oraciones.reduce((sum, s) => sum + s.length, 0) / oraciones.length;
+            
+            // Evaluación más precisa de longitud de oraciones
+            if (longitudPromedio >= 80 && longitudPromedio <= 150) {
+                puntuacion += 0.8; // Longitud óptima
+            } else if (longitudPromedio >= 50 && longitudPromedio <= 200) {
+                puntuacion += 0.4; // Longitud aceptable
+            } else {
+                puntuacion -= 0.5; // Muy cortas o muy largas
+            }
+            
+            // Análisis de diversidad léxica mejorado
+            const palabras = pdfText.split(/\s+/).filter(p => p.length > 3);
+            const palabrasUnicas = new Set(palabras);
+            const diversidadVocabulario = palabrasUnicas.size / palabras.length;
+            
+            if (diversidadVocabulario > 0.5) {
+                puntuacion += 1.0; // Excelente diversidad
+            } else if (diversidadVocabulario > 0.35) {
+                puntuacion += 0.6; // Buena diversidad
+            } else if (diversidadVocabulario < 0.2) {
+                puntuacion -= 0.7; // Pobre diversidad
+            }
+            
+            // Análisis de conectores y cohesión textual
+            const conectores = [
+                'sin embargo', 'por tanto', 'además', 'asimismo', 'por consiguiente', 
+                'en consecuencia', 'no obstante', 'por otro lado', 'en primer lugar',
+                'finalmente', 'en conclusión', 'de esta manera', 'así mismo'
+            ];
+            
+            let conectoresCount = 0;
+            conectores.forEach(conector => {
+                const regex = new RegExp(`\\b${conector}\\b`, 'gi');
+                const matches = pdfText.match(regex);
+                if (matches) conectoresCount += matches.length;
+            });
+            
+            const cohesionScore = Math.min(conectoresCount * 0.1, 0.8);
+            puntuacion += cohesionScore;
+            
+            // Análisis de párrafos y estructura
+            const parrafos = pdfText.split(/\n\s*\n/).filter(p => p.trim().length > 50);
+            const longitudParrafos = parrafos.map(p => p.length);
+            const longitudPromedioParrafo = longitudParrafos.reduce((sum, l) => sum + l, 0) / longitudParrafos.length;
+            
+            if (longitudPromedioParrafo >= 300 && longitudPromedioParrafo <= 800) {
+                puntuacion += 0.4; // Párrafos bien estructurados
+            }
+            
+            // Detección de errores comunes
+            const erroresComunes = [
+                /\b(aver|a ver)\b/gi, // uso incorrecto de "a ver"
+                /\b(haber|a ver)\s+(si|que)\b/gi, // confusión haber/a ver
+                /\b(ay|hay|ahí)\b/gi, // confusión ay/hay/ahí (solo detecta, no penaliza automáticamente)
+            ];
+            
+            let erroresDetectados = 0;
+            erroresComunes.forEach(patron => {
+                const matches = pdfText.match(patron);
+                if (matches) erroresDetectados += matches.length;
+            });
+            
+            if (erroresDetectados > 5) {
+                puntuacion -= 0.4; // Penalización por errores frecuentes
+            }
+            
+            puntuacion = Math.min(Math.max(puntuacion, 1), 5);
+            
+            return {
+                puntuacion: puntuacion,
+                palabrasEncontradas: [],
+                longitudPromedio: longitudPromedio,
+                diversidadVocabulario: diversidadVocabulario,
+                conectoresCount: conectoresCount,
+                erroresDetectados: erroresDetectados,
+                feedback: generarFeedback('redaccion', puntuacion, [], []),
+                recomendaciones: generarRecomendaciones('redaccion', puntuacion, [])
+            };
+        }
+
+        function generarFeedback(criterio, puntuacion, palabrasEncontradas, categoriasCubiertas = []) {
+            const config = criterios[criterio];
+            let feedback = '';
+            
+            if (puntuacion >= 4.5) {
+                feedback = `🌟 Excelente nivel en ${config.nombre.toLowerCase()}. El proyecto demuestra un desarrollo sobresaliente en este aspecto. `;
+            } else if (puntuacion >= 3.5) {
+                feedback = `✅ Buen desarrollo en ${config.nombre.toLowerCase()}. Se observan fortalezas importantes con oportunidades de mejora. `;
+            } else if (puntuacion >= 2.5) {
+                feedback = `⚠️ Desarrollo moderado en ${config.nombre.toLowerCase()}. Requiere fortalecimiento para alcanzar estándares óptimos. `;
+            } else {
+                feedback = `🔧 Desarrollo insuficiente en ${config.nombre.toLowerCase()}. Necesita trabajo significativo para cumplir con los requisitos. `;
+            }
+            
+            // Feedback específico por criterio
+            if (criterio !== 'redaccion' && categoriasCubiertas.length > 0) {
+                const totalCategorias = Object.keys(config.palabrasClave).length;
+                const cobertura = (categoriasCubiertas.length / totalCategorias * 100).toFixed(0);
+                feedback += `Se cubrió el ${cobertura}% de las dimensiones esperadas para este criterio. `;
+                
+                if (categoriasCubiertas.length === totalCategorias) {
+                    feedback += `🎯 Cobertura completa de todos los aspectos clave.`;
+                } else if (categoriasCubiertas.length >= totalCategorias * 0.7) {
+                    feedback += `📊 Buena cobertura de la mayoría de aspectos importantes.`;
+                } else {
+                    feedback += `📈 Oportunidad de ampliar la cobertura de aspectos fundamentales.`;
+                }
+            }
+            
+            return feedback;
+        }
+
+        function generarRecomendaciones(criterio, puntuacion, categoriasCubiertas = []) {
+            if (puntuacion >= 4.5) return "¡Excelente trabajo! Mantén este nivel de calidad y considera ser ejemplo para otros proyectos.";
+            
+            const recomendaciones = {
+                pertinencia: {
+                    alto: [
+                        "Profundiza en la caracterización demográfica específica de los beneficiarios",
+                        "Incluye mapeo detallado de actores y stakeholders del territorio",
+                        "Incorpora análisis de brechas específicas identificadas en estudios oficiales",
+                        "Desarrolla matriz de necesidades priorizadas con criterios claros"
+                    ],
+                    medio: [
+                        "Define con mayor precisión el perfil de la población objetivo",
+                        "Incorpora datos demográficos y socioeconómicos del contexto específico",
+                        "Describe detalladamente las necesidades identificadas y su priorización",
+                        "Incluye evidencia directa de la problemática (testimonios, observación)"
+                    ],
+                    bajo: [
+                        "Establece claramente quién es tu población beneficiaria específica",
+                        "Describe el problema social que tu proyecto busca resolver",
+                        "Explica por qué este proyecto es necesario en este momento y lugar",
+                        "Incluye al menos datos básicos sobre la situación actual"
+                    ]
+                },
+                justificacion: {
+                    alto: [
+                        "Incorpora análisis comparativo con experiencias similares exitosas",
+                        "Incluye revisión sistemática de literatura especializada actualizada",
+                        "Desarrolla marco conceptual robusto con teorías de cambio",
+                        "Agrega análisis de costo-beneficio con proyecciones cuantificadas"
+                    ],
+                    medio: [
+                        "Fortalece el respaldo estadístico con fuentes oficiales recientes",
+                        "Amplía las referencias bibliográficas con estudios especializados",
+                        "Desarrolla un marco teórico más sólido y actualizado",
+                        "Incluye antecedentes de proyectos similares y sus resultados"
+                    ],
+                    bajo: [
+                        "Incluye al menos 3-5 estadísticas oficiales que respalden tu propuesta",
+                        "Agrega referencias bibliográficas de fuentes confiables",
+                        "Busca estudios previos relacionados con tu temática",
+                        "Fundamenta cada afirmación importante con evidencia"
+                    ]
+                },
+                coherencia: {
+                    alto: [
+                        "Desarrolla matriz de marco lógico completa con supuestos y riesgos",
+                        "Incluye teoría de cambio detallada con rutas causales claras",
+                        "Establece sistema de indicadores SMART con líneas base",
+                        "Crea cronograma detallado con hitos críticos y dependencias"
+                    ],
+                    medio: [
+                        "Mejora la alineación entre objetivos específicos y actividades propuestas",
+                        "Desarrolla indicadores más específicos y medibles para cada resultado",
+                        "Organiza las actividades en una secuencia lógica y temporal clara",
+                        "Define productos/entregables concretos para cada componente"
+                    ],
+                    bajo: [
+                        "Define objetivos claros y específicos (qué, quién, cuándo, dónde)",
+                        "Asegúrate que todas las actividades contribuyan a los objetivos",
+                        "Establece al menos 2-3 indicadores básicos de éxito",
+                        "Organiza el proyecto en fases o etapas claras"
+                    ]
+                },
+                redaccion: {
+                    alto: [
+                        "Incorpora técnicas avanzadas de escritura académica y profesional",
+                        "Utiliza registro formal consistente adaptado al público objetivo",
+                        "Emplea variedad estilística y recursos retóricos apropiados",
+                        "Perfecciona la cohesión textual con marcadores discursivos sofisticados"
+                    ],
+                    medio: [
+                        "Revisa cuidadosamente ortografía, gramática y puntuación",
+                        "Utiliza más conectores para mejorar la fluidez entre ideas",
+                        "Varía la estructura y longitud de las oraciones",
+                        "Emplea vocabulario más diverso y preciso según el contexto"
+                    ],
+                    bajo: [
+                        "Realiza corrección ortográfica y gramatical básica",
+                        "Usa oraciones más claras y directas (evita exceso de complejidad)",
+                        "Incluye conectores básicos: además, sin embargo, por tanto",
+                        "Revisa que cada párrafo tenga una idea central clara"
+                    ]
+                },
+                viabilidad: {
+                    alto: [
+                        "Desarrolla análisis de riesgos completo con planes de contingencia",
+                        "Incluye evaluación de capacidades organizacionales con gaps analysis",
+                        "Crea presupuesto detallado con cotizaciones y fuentes de financiamiento",
+                        "Establece cronograma con ruta crítica y recursos asignados"
+                    ],
+                    medio: [
+                        "Desarrolla cronograma más detallado con fechas y responsables específicos",
+                        "Incluye presupuesto itemizado con costos realistas",
+                        "Describe las capacidades del equipo y recursos disponibles",
+                        "Identifica principales riesgos y medidas de mitigación"
+                    ],
+                    bajo: [
+                        "Crea un cronograma básico con al menos fechas de inicio y fin",
+                        "Incluye un presupuesto aproximado de los principales costos",
+                        "Describe qué recursos humanos y materiales necesitas",
+                        "Explica por qué tu equipo puede ejecutar este proyecto"
+                    ]
+                },
+                sostenibilidad: {
+                    alto: [
+                        "Desarrolla modelo de sostenibilidad financiera post-proyecto",
+                        "Incluye estrategia de transferencia tecnológica y conocimiento",
+                        "Crea plan de escalamiento con criterios de replicabilidad",
+                        "Establece sistema de monitoreo de impacto a largo plazo"
+                    ],
+                    medio: [
+                        "Define estrategias concretas para la continuidad después del proyecto",
+                        "Incluye plan de seguimiento y evaluación de resultados",
+                        "Considera cómo el proyecto puede replicarse en otros contextos",
+                        "Analiza el impacto esperado a mediano y largo plazo"
+                    ],
+                    bajo: [
+                        "Explica qué pasará con el proyecto cuando termine el financiamiento",
+                        "Define cómo se dará seguimiento a los resultados obtenidos",
+                        "Considera si el proyecto puede continuar sin apoyo externo",
+                        "Describe los beneficios esperados más allá de la ejecución"
+                    ]
+                },
+                innovacion: {
+                    alto: [
+                        "Desarrolla propuesta de valor diferencial con análisis competitivo",
+                        "Incluye evaluación de impacto disruptivo y escalabilidad",
+                        "Incorpora tecnologías emergentes aplicadas al contexto social",
+                        "Establece métricas de innovación y transferencia tecnológica"
+                    ],
+                    medio: [
+                        "Resalta claramente los elementos novedosos de tu propuesta",
+                        "Explica cómo tu proyecto mejora las soluciones existentes",
+                        "Considera incorporar herramientas tecnológicas disponibles",
+                        "Desarrolla aspectos creativos que distingan tu proyecto"
+                    ],
+                    bajo: [
+                        "Identifica qué hace diferente tu proyecto de otros similares",
+                        "Incluye al menos un elemento creativo o novedoso",
+                        "Considera usar tecnología básica disponible (redes sociales, apps)",
+                        "Explica las mejoras que propones sobre métodos tradicionales"
+                    ]
+                }
+            };
+            
+            const nivelRecomendacion = puntuacion >= 3.5 ? 'alto' : puntuacion >= 2.5 ? 'medio' : 'bajo';
+            const listRecomendaciones = recomendaciones[criterio]?.[nivelRecomendacion] || recomendaciones[criterio]?.['medio'] || ["Continúa desarrollando este aspecto"];
+            
+            return listRecomendaciones[Math.floor(Math.random() * listRecomendaciones.length)];
+        }
+
+        function mostrarResultados() {
+            const resultsDiv = document.getElementById('criteriaResults');
+            let html = '';
+            let totalScore = 0;
+            
+            Object.keys(evaluationResults).forEach(criterio => {
+                const resultado = evaluationResults[criterio];
+                const config = criterios[criterio];
+                totalScore += resultado.puntuacion;
+                
+                // Crear indicadores de fortaleza
+                let strengthIndicators = '';
+                if (criterio !== 'redaccion' && resultado.categoriasCubiertas) {
+                    const cobertura = (resultado.categoriasCubiertas / resultado.totalCategorias);
+                    if (cobertura >= 0.8) strengthIndicators += '<span class="strength-indicator">🎯 Cobertura Completa</span>';
+                    if (resultado.densidadTematica > 2) strengthIndicators += '<span class="strength-indicator">📊 Alta Densidad Temática</span>';
+                    if (resultado.puntuacion >= 4) strengthIndicators += '<span class="strength-indicator">⭐ Excelencia</span>';
+                }
+                
+                html += `
+                    <div class="criterion-result">
+                        <div class="criterion-header">
+                            <span class="criterion-title">${config.nombre}</span>
+                            <span class="criterion-score">${resultado.puntuacion.toFixed(1)}/5.0</span>
+                        </div>
+                        <div class="criterion-feedback">
+                            ${resultado.feedback}
+                        </div>
+                        ${strengthIndicators ? `<div class="details-section">${strengthIndicators}</div>` : ''}
+                        <div class="recommendation">
+                            <strong>💡 Recomendación:</strong> ${resultado.recomendaciones}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+            
+            // Calcular y mostrar puntaje total
+            const promedio = totalScore / Object.keys(evaluationResults).length;
+            document.getElementById('totalScore').textContent = promedio.toFixed(1);
+            
+            // Generar interpretación más detallada
+            let interpretacion = '';
+            let categoria = '';
+            
+            if (promedio >= 4.5) {
+                categoria = 'EXCELENTE';
+                interpretacion = '🏆 ¡Proyecto excepcional! Cumple con los más altos estándares de calidad y está listo para competir en convocatorias exigentes.';
+            } else if (promedio >= 4.0) {
+                categoria = 'MUY BUENO';
+                interpretacion = '🎉 ¡Excelente proyecto! Está muy bien desarrollado con pequeños aspectos por pulir antes de postular.';
+            } else if (promedio >= 3.5) {
+                categoria = 'BUENO';
+                interpretacion = '👍 Buen proyecto con potencial sólido. Implementa las recomendaciones para alcanzar nivel de excelencia.';
+            } else if (promedio >= 3.0) {
+                categoria = 'REGULAR';
+                interpretacion = '⚠️ Proyecto con base sólida pero requiere mejoras importantes antes de postular a convocatorias competitivas.';
+            } else if (promedio >= 2.0) {
+                categoria = 'DEFICIENTE';
+                interpretacion = '🔧 El proyecto necesita desarrollo sustancial en múltiples aspectos fundamentales.';
+            } else {
+                categoria = 'INSUFICIENTE';
+                interpretacion = '🚨 Se requiere replanteamiento completo del proyecto antes de considerar cualquier postulación.';
+            }
+            
+            document.getElementById('scoreInterpretation').innerHTML = `
+                <strong>${categoria}</strong><br>
+                ${interpretacion}
+            `;
+            
+            // Mostrar secciones de resultados
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('totalScoreSection').style.display = 'block';
+            document.getElementById('finalButtons').style.display = 'flex';
+        }
+
+        function enviarResultados() {
+            const nombre = document.getElementById('nombreCompleto').value.trim();
+            const promedio = document.getElementById('totalScore').textContent;
+            
+            // Preparar resumen detallado
+            let resumenDetallado = `EVALUACIÓN AUTOMÁTICA AVANZADA DE PROYECTO\n\n`;
+            resumenDetallado += `Evaluado: ${nombre}\n`;
+            resumenDetallado += `Puntaje Total: ${promedio}/5.0\n`;
+            resumenDetallado += `Fecha: ${new Date().toLocaleString('es-ES')}\n\n`;
+            resumenDetallado += `RESULTADOS DETALLADOS POR CRITERIO:\n`;
+            resumenDetallado += `${'='.repeat(50)}\n`;
+            
+            Object.keys(evaluationResults).forEach((criterio, index) => {
+                const resultado = evaluationResults[criterio];
+                const config = criterios[criterio];
+                resumenDetallado += `\n${index + 1}. ${config.nombre.toUpperCase()}\n`;
+                resumenDetallado += `   Puntuación: ${resultado.puntuacion.toFixed(2)}/5.0\n`;
+                resumenDetallado += `   Evaluación: ${resultado.feedback}\n`;
+                resumenDetallado += `   Recomendación: ${resultado.recomendaciones}\n`;
+                
+                if (criterio !== 'redaccion' && resultado.categoriasCubiertas !== undefined) {
+                    resumenDetallado += `   Cobertura temática: ${resultado.categoriasCubiertas}/${resultado.totalCategorias} dimensiones (${(resultado.categoriasCubiertas/resultado.totalCategorias*100).toFixed(0)}%)\n`;
+                }
+                resumenDetallado += `   ${'-'.repeat(40)}\n`;
+            });
+            
+            resumenDetallado += `\nRESUMEN EJECUTIVO:\n`;
+            const interpretacion = document.getElementById('scoreInterpretation').textContent;
+            resumenDetallado += interpretacion;
+            
+            // Llenar formulario oculto
+            document.getElementById('hiddenNombre').value = nombre;
+            document.getElementById('hiddenPuntaje').value = promedio;
+            document.getElementById('hiddenResultados').value = resumenDetallado;
+            
+            // Enviar formulario
+            document.getElementById('hiddenForm').submit();
+            mostrarNotificacion('Resultados enviados correctamente', 'success');
+        }
+
+        function copiarResumen() {
+            const nombre = document.getElementById('nombreCompleto').value.trim();
+            const promedio = document.getElementById('totalScore').textContent;
+            const interpretacion = document.getElementById('scoreInterpretation').textContent;
+            
+            if (!nombre) {
+                mostrarNotificacion('Por favor ingresa tu nombre completo', 'error');
+                return;
+            }
+            
+            let resumen = `📊 EVALUACIÓN AUTOMÁTICA AVANZADA DE PROYECTO\n\n`;
+            resumen += `👤 Evaluado: ${nombre}\n`;
+            resumen += `🎯 Puntaje Total: ${promedio}/5.0\n`;
+            resumen += `📝 Categoría: ${interpretacion.split('\n')[0]}\n`;
+            resumen += `📅 Fecha: ${new Date().toLocaleDateString('es-ES')}\n\n`;
+            resumen += `📈 ANÁLISIS DETALLADO POR CRITERIO:\n`;
+            resumen += `${'═'.repeat(45)}\n`;
+            
+            Object.keys(evaluationResults).forEach((criterio, index) => {
+                const resultado = evaluationResults[criterio];
+                const config = criterios[criterio];
+                
+                let nivel = '';
+                if (resultado.puntuacion >= 4.5) nivel = '🌟 EXCELENTE';
+                else if (resultado.puntuacion >= 3.5) nivel = '✅ BUENO';
+                else if (resultado.puntuacion >= 2.5) nivel = '⚠️ REGULAR';
+                else nivel = '🔧 DEFICIENTE';
+                
+                resumen += `\n${index + 1}. ${config.nombre.toUpperCase()}\n`;
+                resumen += `   📊 Puntuación: ${resultado.puntuacion.toFixed(1)}/5.0 ${nivel}\n`;
+                resumen += `   💡 Recomendación clave: ${resultado.recomendaciones}\n`;
+                
+                if (criterio !== 'redaccion' && resultado.categoriasCubiertas !== undefined) {
+                    const cobertura = (resultado.categoriasCubiertas/resultado.totalCategorias*100).toFixed(0);
+                    resumen += `   🎯 Cobertura temática: ${cobertura}%\n`;
+                }
+                resumen += `   ${'-'.repeat(40)}\n`;
+            });
+            
+            resumen += `\n🎯 CONCLUSIÓN GENERAL:\n`;
+            resumen += interpretacion.replace(/\n/g, ' ');
+            resumen += `\n\n🔒 Evaluación generada por sistema automático avanzado`;
+            resumen += `\n⏰ ${new Date().toLocaleString('es-ES')}`;
+            
+            navigator.clipboard.writeText(resumen).then(() => {
+                mostrarNotificacion('📋 Resumen completo copiado al portapapeles', 'success');
+            }).catch(err => {
+                mostrarNotificacion('Error al copiar el resumen', 'error');
+            });
+        }
+
+        function reiniciar() {
+            // Limpiar formulario
+            document.getElementById('nombreCompleto').value = '';
+            document.getElementById('proyectoPDF').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('analyzeBtn').textContent = '🔍 Analizar Proyecto';
+            
+            // Ocultar resultados
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('totalScoreSection').style.display = 'none';
+            document.getElementById('finalButtons').style.display = 'none';
+            
+            // Limpiar datos
+            pdfText = '';
+            evaluationResults = {};
+            
+            mostrarNotificacion('✨ Formulario reiniciado - Listo para nueva evaluación', 'success');
+        }
+
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = mensaje;
+            notification.className = `notification ${tipo === 'error' ? 'error' : ''}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Validación en tiempo real del nombre
+        document.getElementById('nombreCompleto').addEventListener('input', function() {
+            const hasName = this.value.trim().length > 0;
+            const hasFile = document.getElementById('proyectoPDF').files.length > 0;
+            document.getElementById('analyzeBtn').disabled = !(hasName && hasFile);
+        });
+    </script>
+</body>
+</html>
